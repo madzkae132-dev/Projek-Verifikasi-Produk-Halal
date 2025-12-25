@@ -8,21 +8,22 @@ from threading import Thread
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# --- 1. SERVER WEB (KEEP-ALIVE UNTUK RENDER) ---
-app = Flask('')
+# --- 1. SERVER WEB (HEALTH CHECK UNTUK KOYEB) ---
+app = Flask(__name__)
 
 @app.route('/')
 def home():
     return "Bot Halal Monitor is Running!"
 
 def run_web():
+    # Koyeb memerlukan binding ke 0.0.0.0 agar bisa diakses secara publik
     app.run(host='0.0.0.0', port=8080)
 
 def keep_alive():
     t = Thread(target=run_web)
     t.start()
 
-# --- 2. LOAD DATABASE EKSTERNAL ---
+# --- 2. LOAD DATABASE ---
 def load_db():
     try:
         with open('database_zat.json', 'r') as f:
@@ -57,7 +58,7 @@ def analisis_halal(teks):
 
 # --- 4. HANDLERS ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Halo! Kirim komposisi (teks) atau foto label produk untuk cek kehalalan.")
+    await update.message.reply_text("Halo! Kirim teks komposisi atau foto label produk untuk cek kehalalan.")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     hasil = analisis_halal(update.message.text)
@@ -66,11 +67,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Sedang memproses gambar... 🔍")
     try:
-        # Path Tesseract otomatis (Windows vs Linux)
-        if os.name == 'nt':
-            pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-        else:
-            pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+        # Path Tesseract untuk server Linux (Koyeb)
+        pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 
         file = await update.message.photo[-1].get_file()
         img_bytes = await file.download_as_bytearray()
@@ -83,16 +81,16 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # --- 5. MAIN RUNNER ---
 if __name__ == '__main__':
+    # GANTI TOKEN DI BAWAH INI
     TOKEN = '8500299562:AAF1zgo01wLDB5gIqa7BJ3jQuE5inpCoWrM'
     
     application = Application.builder().token(TOKEN).build()
-
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
 
-    # Jalankan Server Web (Keep-Alive)
+    # Jalankan Flask di background agar Koyeb mendeteksi aplikasi "Healthy"
     keep_alive()
 
-    print("Bot Halal Aktif & Web Server Berjalan...")
+    print("Bot Aktif di Koyeb...")
     application.run_polling(drop_pending_updates=True)
