@@ -1,7 +1,7 @@
-# Gunakan image Python resmi
+# Gunakan gambar Python resmi
 FROM python:3.11-slim
 
-# Instal Tesseract OCR dan dependensi sistem
+# Instal Tesseract OCR dan sistem dependensi
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-ind \
@@ -11,11 +11,11 @@ RUN apt-get update && apt-get install -y \
 # Set folder kerja
 WORKDIR /app
 
-# Copy file requirements dan instal library Python
+# Salin persyaratan file dan instal pustaka Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy semua file projek ke dalam container
+# Copy semua file proyek ke dalam container
 COPY . .
 
 # Jalankan bot
