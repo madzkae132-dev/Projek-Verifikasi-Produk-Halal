@@ -1,22 +1,22 @@
-# Use official Python image
+# Gunakan gambar Python resmi
 FROM python:3.11-slim
 
-# Install Tesseract OCR and system dependencies
+# Instal Tesseract OCR dan sistem dependensi
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-ind \
     libgl1-mesa-glx \
     && apt-get clean
 
-# Set working directory
+# Set folder kerja
 WORKDIR /app
 
-# Copy requirements and install Python libraries
+# Salin file requirements dan instal pustaka Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all project files
+# Salin semua file proyek ke dalam kontainer
 COPY . .
 
-# Run the bot
+# Jalankan bot
 CMD ["python", "bot_halal.py"]
